@@ -1,41 +1,13 @@
+# app.py
 import numpy as np
 import joblib
 import base64
 import io
+import os
 from flask import Flask, request, jsonify, render_template
 from PIL import Image
+from model import GaussianNB  # Import from model.py instead of defining here
 
-# Define GaussianNB class
-class GaussianNB:
-    def __init__(self):
-        self.priors = {}
-        self.mean = {}
-        self.var = {}
-
-    def fit(self, X, y):
-        self.classes = np.unique(y)
-        for c in self.classes:
-            X_c = X[y == c]
-            self.mean[c] = X_c.mean(axis=0)
-            self.var[c] = X_c.var(axis=0) + 1e-6
-            self.priors[c] = len(X_c) / len(X)
-
-    def gaussian_pdf(self, x, mean, var):
-        exponent = np.exp(-((x - mean) ** 2) / (2 * var))
-        return (1 / np.sqrt(2 * np.pi * var)) * exponent
-
-    def predict(self, X):
-        predictions = []
-        for x in X:
-            posteriors = {}
-            for c in self.classes:
-                prior = np.log(self.priors[c])
-                likelihood = np.sum(np.log(self.gaussian_pdf(x, self.mean[c], self.var[c])))
-                posteriors[c] = prior + likelihood
-            predictions.append(max(posteriors, key=posteriors.get))
-        return np.array(predictions)
-
-# Initialize Flask app
 app = Flask(__name__)
 
 # Load the trained model
@@ -63,4 +35,5 @@ def predict():
     return jsonify({"prediction": int(prediction[0])})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
