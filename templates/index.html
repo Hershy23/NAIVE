@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handwritten Digit Recognition</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Handwritten Digit Recognition</h1>
+        
+        <input type="file" accept="image/*" id="upload">
+        <img id="preview" class="hidden" alt="Image Preview">
+        
+        <button id="predict">Predict</button>
+        
+        <p id="result"></p>
+    </div>
+
+    <script>
+        document.getElementById('predict').addEventListener('click', async () => {
+            const fileInput = document.getElementById('upload');
+            const resultElement = document.getElementById('result');
+            
+            if (!fileInput.files[0]) {
+                resultElement.textContent = 'Please upload an image first';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const preview = document.getElementById('preview');
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                
+                try {
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            image: e.target.result.split(',')[1]
+                        }),
+                    });
+                    
+                    const data = await response.json();
+                    resultElement.textContent = `Predicted digit: ${data.prediction}`;
+                } catch (error) {
+                    resultElement.textContent = 'Error making prediction';
+                    console.error(error);
+                }
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        });
+    </script>
+</body>
+</html>
